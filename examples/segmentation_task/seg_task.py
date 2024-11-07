@@ -26,6 +26,9 @@ from scipy.io import savemat
 import unet_model as unet
 import training as train_utils
 from meshseg_dataset import MeshSeg, img_loader
+import os
+from concurrent.futures import ThreadPoolExecutor
+import time
 
 ###############################################################################
 # General Parameters                                                          #
@@ -34,7 +37,7 @@ DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 MESH_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'meshes')
 gptoolbox_path = '../../gptoolbox-master'
 matlab_path = 'C:\\Program Files\\MATLAB\\R2017a\\bin\\matlab.exe'
-
+MAX_WORKERS = 5
 
 # set cuda GPU device
 os.environ['CUDA_VISIBLE_DEVICES'] = '1'
@@ -86,9 +89,10 @@ def generate_data_mesh(data_dir, mesh_path, segmentation_path, n_augment=1):
     
     cmd = [matlab_path, '-nodisplay', '-nosplash', '-nodesktop', '-r', matlab_cmd]
     # call matlab flatten_mesh script
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-    for line in iter(process.stdout.readline, b''):
-        sys.stdout.write(line.decode(sys.stdout.encoding))
+    process = subprocess.call(cmd, stdout=subprocess.PIPE)
+    # process.wait()
+    # for line in iter(process.stdout.readline, b''):
+    #     sys.stdout.write(line.decode(sys.stdout.encoding))
 
 
 def generate_data(data_dir, meshes_dir, n_augment=1):
@@ -96,11 +100,14 @@ def generate_data(data_dir, meshes_dir, n_augment=1):
     #breakpoint()
     meshes_paths = get_meshes_paths(meshes_dir)
     for mesh_path in meshes_paths:
-        print('processing:', mesh_path)
-        name = os.path.split(mesh_path)[-1]
-        segm_path = os.path.join(meshes_dir, name.replace('.off', '.txt'))
-        generate_data_mesh(data_dir, mesh_path, segm_path, n_augment)
+        process_mesh(data_dir, mesh_path,meshes_dir, n_augment)
+        time.sleep(60)
 
+def process_mesh(data_dir, mesh_path, meshes_dir, n_augment=1):
+    print('processing:', mesh_path)
+    name = os.path.split(mesh_path)[-1]
+    segm_path = os.path.join(meshes_dir, name.replace('.off', '.txt'))
+    generate_data_mesh(data_dir, mesh_path, segm_path, n_augment)
 
 ###############################################################################
 # Train                                                                       #
@@ -214,6 +221,7 @@ def predict(data_dir, imgs_dir, meshes_dir, model):
         segm_path = os.path.join(meshes_dir, '{}.txt'.format(shrec_num))
         mesh_results_dir = os.path.join(results_dir, shrec_num)
         aggregate_predictions(data_dir=data_dir, segmentation_path=segm_path, preds_dir=mesh_results_dir)
+        time.sleep(10)
 
 
 
@@ -223,10 +231,10 @@ if __name__ == "__main__":
     IMGS_DIR = os.path.join(DATA_DIR, 'images')
 
     # generate some train flattened-images from the train set of meshes
-    generate_data(DATA_DIR, MESH_DIR, n_augment=2)
+    #generate_data(DATA_DIR, MESH_DIR, n_augment=1)
 
     # train a model using the flattened images
-    train_net(imgs_dir=IMGS_DIR)
+    #train_net(imgs_dir=IMGS_DIR)
 
     # predict results using the trained model
     # let's load our trained model

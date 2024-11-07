@@ -1,6 +1,8 @@
 function aggregate_predictions(gptoolbox_path, preds_dir, segmentation_path, flat_dir, ploteach)
     % INPUT: PROJ_PATH, SHREC_NUM, MAT_DIR
-    
+    [filepath1,name1,ext1] = fileparts(segmentation_path)
+    filename1 =strcat(name1, '_SFM.txt')
+    segmentation_path = fullfile(filepath1, filename1);
     % add paths
     disp(['pwd: ' pwd])
     addpath(genpath(pwd))
@@ -50,6 +52,8 @@ function aggregate_predictions(gptoolbox_path, preds_dir, segmentation_path, fla
         res(ii) = evaluate_mesh(V, T, pred_on_mesh, GTsegmentation);
         disp([datestr(datetime('now')) ' res: ', num2str(res(ii))]);
 
+        
+
         % plot results
         if ploteach == true
             figure;
@@ -76,12 +80,21 @@ function aggregate_predictions(gptoolbox_path, preds_dir, segmentation_path, fla
     res_agg = evaluate_mesh(V, T, pred, GTsegmentation);
     disp([datestr(datetime('now')) ' ' 'aggregated res: ', num2str(res_agg), ' mean: ', num2str(mean(res))]);
 
+
+    filename2 =strcat(name1, '_SFM.off')
+    mesh_path = fullfile(filepath1, filename2);
+    [V_orig, T_orig] = readOFF(mesh_path);
+
     % plot results
     figure;
     c = colormap('jet');
     suptitle(strrep(shortname, '_', ' '));
-
+    [filepath,name,ext] = fileparts(segmentation_path)
+    filename =strcat(name, '.ply')
+    ply_file = fullfile(AGGS_DIR, filename);
+    disp(ply_file)
     cc = c(ceil(size(c,1)*double(pred)/numClasses),:);
+    save_ply_cc(ply_file,V_orig,T_orig, cc);
     subplot(1,2,1); patch('vertices',V,'faces',T,'FaceVertexCData',cc,'FaceColor','flat','EdgeColor','none','FaceAlpha',1);
     title(sprintf('Our Prediction - %.4f', res_agg), 'FontSize', 30);
     axis equal
