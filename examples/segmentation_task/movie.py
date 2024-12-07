@@ -12,6 +12,14 @@ def create_video_from_images(image_folder, output_video, frame_rate=60):
     clip.write_videofile(output_video, codec="libx264")
 
 # Example usage
-image_folder = 'D:\\studia\\doktorat\\segmentation\\data\\Agata\\Segmentation\\animation\\back'  # Folder containing your images
-output_video = 'D:\\studia\\doktorat\\segmentation\\data\\Agata\\Segmentation\\animation\\back\\back.mp4'  # Name of the output video file
-create_video_from_images(image_folder, output_video, frame_rate=24)
+image_folder = 'D:\\studia\\doktorat\\segmentation\\data\\Mirek\\Segmentation\\animation\\diff'
+#output_video = 'D:\\studia\\doktorat\\segmentation\\data\\Mirek\\Segmentation\\animation\\combined\\perspective\\perspective.mp4' 
+
+var = ["combined", "combined_5", "combined_20", "combined_50", "combined_n2", "combined_n3"]
+
+
+for x in var:
+    create_video_from_images(f"{image_folder}/{x}/side",f"{image_folder}/{x}/side/side.mp4", frame_rate=24)
+    create_video_from_images(f"{image_folder}/{x}/front",f"{image_folder}/{x}/front/front.mp4", frame_rate=24)
+    create_video_from_images(f"{image_folder}/{x}/back",f"{image_folder}/{x}/back/back.mp4", frame_rate=24)
+    create_video_from_images(f"{image_folder}/{x}/perspective",f"{image_folder}/{x}/perspective/perspective.mp4", frame_rate=24)
